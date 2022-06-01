@@ -1,11 +1,10 @@
-#ifndef HEMALLOC
-#define HEMALLOC
+#ifndef JEMALLOC
+#define JMALLOC
 
 
 #include <unistd.h>
 #include <assert.h>
 
-#define DEBUG 0
 
 struct block_meta {
   
@@ -15,15 +14,11 @@ struct block_meta {
   
   int free;
 
-#if DEBUG
-  int magic; // For debugging 
-#endif
-
 };
 
 #define META_SIZE sizeof(struct block_meta)
 
-void *global_base = NULL;
+void *global_base = NULL; //head
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size) {
   
@@ -52,23 +47,16 @@ struct block_meta *request_space(struct block_meta* last, size_t size) {
     assert((void*)block == request); 
     
     if (request == (void*) -1) 
-    {
         return NULL; // sbrk failed.
-    }
 
     if (last) 
-    { // NULL on first request.
-        last->next = block;
-    }
+        last->next = block; // NULL on first request
+        
     block->size = size;
 
     block->next = NULL;//block is the new head
     
     block->free = 0;
-
-#if DEBUG
-    block->magic = 0x12345678;
-#endif
 
     return block;
 }
@@ -76,7 +64,6 @@ struct block_meta *request_space(struct block_meta* last, size_t size) {
 void *malloc(size_t size) {
 
     struct block_meta *block;
-    // TODO: align size?
 
     if (size <= 0) 
     {
@@ -109,22 +96,18 @@ void *malloc(size_t size) {
 
         } else 
         {     
-          
              // Found free block
             block->free = 0;
-
-#if DEBUG
-            block->magic = 0x77777777;
-#endif
-
         }
     }
 
-    return(block+1);
+    return(block+1); 
 }
 
 struct block_meta *get_block_ptr(void *ptr) {
-  return (struct block_meta*)ptr - 1;
+
+      return (struct block_meta*)ptr - 1;
+
 }
 
 
@@ -137,15 +120,8 @@ void free(void *ptr) {
 
   assert(block_ptr->free == 0);
 
-#if DEBUG
-    assert(block_ptr->magic == 0x77777777 || block_ptr->magic == 0x12345678);
-#endif
- 
-  block_ptr->free = 1;
 
-#if DEBUG
-    block_ptr->magic = 0x55555555;
-#endif
+  block_ptr->free = 1;
 
 }
 
