@@ -36,12 +36,14 @@ struct block_meta *find_free_block(struct block_meta **last, size_t size) {
 
 }
 
+/*[size + info]->[size + info]->[size + info]*/
+
 struct block_meta *request_space(struct block_meta* last, size_t size) {
 
     struct block_meta *block;
 
     block = sbrk(0);
-
+  
     void *request = sbrk(size + META_SIZE); //offset request
 
     assert((void*)block == request); 
